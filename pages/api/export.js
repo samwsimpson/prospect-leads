@@ -1,4 +1,4 @@
-import { exportLeadsToCSV } from '../../utils/exportUtils';
+import { exportLeadsToCSV } from '../../utils/csvExportUtils';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
