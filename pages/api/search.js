@@ -1,44 +1,36 @@
-// pages/api/search.js
-import { fetchPlacesByKeyword } from '../../utils/googlePlacesApi';
+import { fetchPlacesByZip } from '../../utils/googlePlacesApi';
 import { isThirdPartyUrl } from '../../utils/isThirdPartyUrl';
 
 export default async function handler(req, res) {
-  const { zip, keyword, includeThirdParty = 'false' } = req.query;
+  const { zip, keyword, includeThirdParty } = req.query;
 
   if (!zip || !keyword) {
     return res.status(400).json({ error: 'Missing zip or keyword' });
   }
 
   try {
-    const places = await fetchPlacesByKeyword(zip, keyword);
+    const results = await fetchPlacesByZip(zip, keyword);
 
-    const filteredResults = places.filter(place => {
-      const hasWebsite = place.website || place.vicinity || place.url;
-      const websiteUrl = place.website || '';
-      const include = includeThirdParty === 'true';
+    if (!Array.isArray(results)) {
+      return res.status(500).json({ error: 'Unexpected response from Google Places API' });
+    }
 
-      if (!hasWebsite) return false;
+    const filteredResults = results.filter(place => {
+      const website = place.website || '';
+      const hasOfficialWebsite = website && !isThirdPartyUrl(website);
 
-      if (include) return true;
+      // If user chooses to include 3rd party links, return anything with a URL
+      if (includeThirdParty === 'true') {
+        return !hasOfficialWebsite; // return if no website or 3rd-party one
+      }
 
-      return websiteUrl && !isThirdPartyUrl(websiteUrl);
+      // Default: only return results with no website at all
+      return !website;
     });
 
-    const formatted = filteredResults.map(place => ({
-      name: place.name,
-      formatted_address: place.vicinity || '',
-      formatted_phone_number: place.formatted_phone_number || '',
-      website: place.website || '',
-      rating: place.rating || '',
-      user_ratings_total: place.user_ratings_total || '',
-      business_status: place.business_status || '',
-      opening_hours: place.opening_hours || null,
-      types: place.types || []
-    }));
-
-    res.status(200).json(formatted);
+    res.status(200).json({ results: filteredResults });
   } catch (error) {
     console.error('Search API error:', error);
-    res.status(500).json({ error: 'Failed to fetch places' });
+    res.status(500).json({ error: 'Something went wrong during the search' });
   }
 }

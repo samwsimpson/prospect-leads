@@ -1,13 +1,23 @@
+
 export function isThirdPartyUrl(url) {
-  const thirdPartyPatterns = [
-    /facebook\.com/i,
-    /instagram\.com/i,
-    /opentable\.com/i,
-    /grubhub\.com/i,
-    /ubereats\.com/i,
-    /doordash\.com/i,
-    /yelp\.com/i,
-    /tripadvisor\.com/i
+  const thirdPartyDomains = [
+    'facebook.com',
+    'instagram.com',
+    'tripadvisor.com',
+    'opentable.com',
+    'grubhub.com',
+    'doordash.com',
+    'ubereats.com',
+    'yelp.com',
+    'menuu.com',
+    'menupix.com',
+    'zomato.com',
+    'allmenus.com'
   ];
-  return thirdPartyPatterns.some(pattern => pattern.test(url));
+  try {
+    const hostname = new URL(url).hostname.replace('www.', '');
+    return thirdPartyDomains.some(domain => hostname.includes(domain));
+  } catch (e) {
+    return false;
+  }
 }
