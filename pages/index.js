@@ -1,33 +1,36 @@
-import Head from 'next/head';
-import BusinessCard from '../components/BusinessCard';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 export default function Home() {
   const [zip, setZip] = useState('');
   const [keyword, setKeyword] = useState('');
+  const [noWebsiteOnly, setNoWebsiteOnly] = useState(true);
   const [results, setResults] = useState([]);
 
   const handleSearch = async () => {
-    const res = await fetch(`/api/search?zip=${zip}&keyword=${keyword}`);
-    const data = await res.json();
+    const response = await fetch(`/api/search?zip=${zip}&keyword=${keyword}&noWebsiteOnly=${noWebsiteOnly}`);
+    const data = await response.json();
     setResults(data);
   };
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      <Head>
-        <title>Prospect Leads</title>
-        <meta name="description" content="Find businesses without websites" />
-      </Head>
-      <h1 className="text-2xl font-bold mb-4">Prospect Leads</h1>
-      <div className="flex gap-2 mb-4">
-        <input className="border p-2 flex-1" placeholder="Zip Code" value={zip} onChange={e => setZip(e.target.value)} />
-        <input className="border p-2 flex-1" placeholder="Business Type" value={keyword} onChange={e => setKeyword(e.target.value)} />
-        <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={handleSearch}>Search</button>
-      </div>
-      <div>
-        {results.map((b, idx) => <BusinessCard business={b} key={idx} />)}
-      </div>
+    <div>
+      <h1>Prospect Leads</h1>
+      <input placeholder="Zip Code" value={zip} onChange={(e) => setZip(e.target.value)} />
+      <input placeholder="Keyword" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
+      <label>
+        <input type="checkbox" checked={noWebsiteOnly} onChange={() => setNoWebsiteOnly(!noWebsiteOnly)} />
+        Only show businesses without websites
+      </label>
+      <button onClick={handleSearch}>Search</button>
+      <ul>
+        {results.map((biz, index) => (
+          <li key={index}>
+            <strong>{biz.name}</strong><br />
+            {biz.formatted_address}<br />
+            {biz.website || 'No website'}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
